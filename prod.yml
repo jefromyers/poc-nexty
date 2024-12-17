@@ -1,0 +1,39 @@
+services:
+  backend:
+    container_name: backend
+    build:
+      context: .
+      dockerfile: ./docker/be.dockerfile.prod
+    ports:
+      - "8000:8000"
+    networks:
+      - backend
+
+  frontend:
+    container_name: frontend
+    build:
+      context: .
+      dockerfile: ./docker/fe.dockerfile.prod
+    ports:
+      - "3000:3000"
+    networks:
+      - backend
+    depends_on:
+      - backend
+
+  nginx:
+    image: nginx:1.26.2-alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - backend
+    depends_on:
+      - frontend
+      - backend
+
+networks:
+  backend:

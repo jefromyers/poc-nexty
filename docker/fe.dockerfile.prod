@@ -1,0 +1,37 @@
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+# copy package files
+COPY ./frontend/package.json ./frontend/package-lock.json ./
+RUN npm ci
+
+# Copy source code and configs
+COPY ./frontend/tsconfig.json ./tsconfig.json
+COPY ./frontend/public ./public
+COPY ./frontend/src ./src
+COPY ./frontend/src/app/globals.css ./src/app/globals.css
+COPY ./frontend/next.config.ts ./next.config.ts
+COPY ./frontend/tailwind.config.ts ./tailwind.config.ts
+COPY ./frontend/postcss.config.mjs ./postcss.config.mjs
+
+RUN npm run build
+
+FROM node:18-alpine AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# copy production dependencies
+COPY --from=builder /app/package.json /app/package-lock.json ./
+RUN npm ci --production
+
+# copy build artifacts and public assets
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+
+# expose the Next.js server port
+EXPOSE 3000
+CMD ["node", "server.js"]
