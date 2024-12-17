@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 export default async function Home() {
+  console.log("Fetching on the server...");
   const res = await fetch("http://backend:8000/api/", { cache: "no-store" });
   const data = await res.json();
 
